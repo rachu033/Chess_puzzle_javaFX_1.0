@@ -18,7 +18,7 @@ The project was developed as part of a laboratory course at the **Military Unive
 ## 🖼 Chess Piece Textures
 
 Chess piece textures used in this project are based on work by [Cburnett](https://commons.wikimedia.org/wiki/User:Cburnett), available on [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:PNG_chess_pieces/Standard_transparent).  
-The original files are licensed under the [Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)](https://creativecommons.org/licenses/by-sa/3.0/).
+The original files are licensed under the [Creative Commons](https://creativecommons.org/licenses/by-sa/3.0/).
 
 I have not modified the images.
 
