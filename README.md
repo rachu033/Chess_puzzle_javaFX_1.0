@@ -29,3 +29,12 @@ You are free to use these textures under the same license terms.
 - Full chess logic has been implemented, including **castling** and **en passant**.
 - However, game end conditions are currently limited to **checkmate** and **stalemate**.
 - Other draw rules such as **insufficient material**, **threefold repetition**, or the **fifty-move rule** are not yet supported.
+
+## 🚀 How to Run the Program
+
+To run the program, execute the `Main` class located in the following directory:  
+`src/main/java/code/chess/Main.java`
+
+### Recommended Development Environment:
+- **IDE**: IntelliJ IDEA (highly recommended for JavaFX development)
+- **Java Version**: Use the **latest stable version** of **Java** (Java 17+ is recommended for best compatibility)
