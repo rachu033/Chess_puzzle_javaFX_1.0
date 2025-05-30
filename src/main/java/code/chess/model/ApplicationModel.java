@@ -1,20 +1,20 @@
 package code.chess.model;
 
-import code.chess.model.chessgame.ChessLogic;
+import code.chess.model.chessgame.LogicChess;
 import code.chess.model.database.Database;
 
 public class ApplicationModel {
-    private ChessLogic chessLogic;
+    private LogicChess logicChess;
 
     public ApplicationModel() {
         Database.initialize();
     }
 
-    public ChessLogic getChessLogic() {
-        return chessLogic;
+    public LogicChess getChessLogic() {
+        return logicChess;
     }
 
-    public void setChessLogic(ChessLogic chessLogic) {
-        this.chessLogic = chessLogic;
+    public void setChessLogic(LogicChess logicChess) {
+        this.logicChess = logicChess;
     }
 }

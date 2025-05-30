@@ -1,8 +1,14 @@
 package code.chess.view;
 
+import code.chess.controller.SettingsController;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class ApplicationView {
 
@@ -41,5 +47,24 @@ public class ApplicationView {
 
     public SideBarView getSideBarView() {
         return sideBarView;
+    }
+
+    public void openWindow(String fxmlPath, String title) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent root = loader.load();
+            if(fxmlPath.contains("settings")) {
+                SettingsController controller = loader.getController();
+                controller.setBoardView(getBoardView());
+            }
+            Stage stage = new Stage();
+            stage.setTitle(title);
+            stage.setResizable(false);
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

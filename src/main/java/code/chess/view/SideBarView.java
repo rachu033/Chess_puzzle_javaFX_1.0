@@ -3,10 +3,12 @@ package code.chess.view;
 import code.chess.controller.ApplicationController;
 import code.chess.controller.GameController;
 import code.chess.model.puzzle.Puzzle;
+import javafx.animation.PauseTransition;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.util.Duration;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -15,13 +17,32 @@ public class SideBarView extends VBox {
     private final Button newGameButton = new Button("Gracz vs Gracz");
     private final Button newPuzzleButton = new Button("Wylosuj zagadkę");
     private final Button copyPgnButton = new Button("Kopiuj PGN");
+    private final Button settingsButton = new Button("⚙ Ustawienia");
+    private final Button aboutButton = new Button("Autor");
     private final PuzzleListView puzzleListView = new PuzzleListView();
     private final InfoBox infoBox = new InfoBox();
     private Consumer<ApplicationController.Event> eventHandlerApplication;
     private Consumer<GameController.Event> eventHandlerGame;
 
-    public PuzzleListView getPuzzleListView() {
-        return puzzleListView;
+    private static final String BUTTON_STYLE = """
+        -fx-background-color: #3a3a3a;
+        -fx-text-fill: white;
+        -fx-font-weight: bold;
+        -fx-background-radius: 0;
+        -fx-border-color: transparent;
+        -fx-border-width: 2;
+        -fx-focus-color: #2e8b57;
+        -fx-faint-focus-color: rgba(46,139,87,0.4);
+    """;
+
+    private static final String BUTTON_HOVER_STYLE = BUTTON_STYLE + "-fx-opacity: 0.8;";
+
+    private void styleButton(Button button) {
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setPrefHeight(50.0);
+        button.setStyle(BUTTON_STYLE);
+        button.setOnMouseEntered(_ -> button.setStyle(BUTTON_HOVER_STYLE));
+        button.setOnMouseExited(_ -> button.setStyle(BUTTON_STYLE));
     }
 
     public SideBarView(double width) {
@@ -41,9 +62,12 @@ public class SideBarView extends VBox {
     private void initializeSidebar() {
         this.setSpacing(10);
 
-        newGameButton.setMaxWidth(Double.MAX_VALUE);
-        newGameButton.setPrefHeight(50);
-        setNewGameButton();
+        styleButton(newGameButton);
+        styleButton(newPuzzleButton);
+        styleButton(copyPgnButton);
+        styleButton(settingsButton);
+        styleButton(aboutButton);
+
         VBox.setMargin(newGameButton, new javafx.geometry.Insets(0, 5, 0, 5));
         newGameButton.setOnAction(_ -> {
             if (eventHandlerApplication != null) {
@@ -51,9 +75,6 @@ public class SideBarView extends VBox {
             }
         });
 
-        newPuzzleButton.setMaxWidth(Double.MAX_VALUE);
-        newPuzzleButton.setPrefHeight(50);
-        setNewPuzzleButton();
         VBox.setMargin(newPuzzleButton, new javafx.geometry.Insets(0, 5, 0, 5));
         newPuzzleButton.setOnAction(_ -> {
             if (eventHandlerApplication != null) {
@@ -61,9 +82,6 @@ public class SideBarView extends VBox {
             }
         });
 
-        copyPgnButton.setMaxWidth(Double.MAX_VALUE);
-        copyPgnButton.setPrefHeight(50);
-        copyPgnButton.setStyle("-fx-background-color: gray; -fx-alignment: center; -fx-background-radius: 0; -fx-text-fill: white; -fx-font-weight: bold;");
         copyPgnButton.setOnAction(_ -> {
             if (puzzleListView.getSelectedView() != null) {
                 String pgn = puzzleListView.getSelectedView().getPuzzle().getPgn();
@@ -81,7 +99,14 @@ public class SideBarView extends VBox {
         VBox.setMargin(infoBox, new javafx.geometry.Insets(0, 5, 0, 5));
         infoBox.setDefaultInfo("Czyj ruch?");
 
-        this.getChildren().addAll(newGameButton, newPuzzleButton, puzzleListView, infoBox, copyPgnButton);
+        VBox.setMargin(settingsButton, new javafx.geometry.Insets(0, 5, 0, 5));
+        settingsButton.setOnAction(_ -> eventHandlerApplication.accept(new ApplicationController.OpenSettingsEvent()));
+
+        VBox.setMargin(aboutButton, new javafx.geometry.Insets(0, 5, 0, 5));
+
+        aboutButton.setOnAction(_ -> eventHandlerApplication.accept(new ApplicationController.OpenAuthorEvent()));
+
+        this.getChildren().addAll(newGameButton, newPuzzleButton, puzzleListView, infoBox, copyPgnButton, settingsButton, aboutButton);
     }
 
     public void addPuzzleToList(Puzzle puzzle) {
@@ -96,60 +121,31 @@ public class SideBarView extends VBox {
         puzzleListView.updatePuzzleSolved(puzzle);
     }
 
+    public PuzzleListView getPuzzleListView() {
+        return puzzleListView;
+    }
+
     public void setNewPuzzleButtonLoad() {
-        newPuzzleButton.setStyle(
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: GREEN;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: transparent;" +
-                        "-fx-border-width: 2;" +
-                        "-fx-focus-color: #2e8b57;" +
-                        "-fx-faint-focus-color: rgba(46,139,87,0.4);"
-        );
         newPuzzleButton.setText("Ładowanie...");
         newPuzzleButton.setDisable(true);
     }
 
     public void setNewPuzzleButtonException() {
         newPuzzleButton.setStyle(
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: RED;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: transparent;" +
-                        "-fx-border-width: 2;" +
-                        "-fx-focus-color: #2e8b57;" +
-                        "-fx-faint-focus-color: rgba(46,139,87,0.4);"
+                BUTTON_STYLE.replace("-fx-background-color: #3a3a3a;", "-fx-background-color: RED;")
         );
         newPuzzleButton.setText("Błąd pobierania zagadki");
-        newPuzzleButton.setDisable(false);
+        newPuzzleButton.setDisable(true);
+
+        PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
+        pause.setOnFinished(_ -> setNewPuzzleButton());
+        pause.play();
     }
 
     public void setNewPuzzleButton() {
-        newPuzzleButton.setStyle(
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: #3a3a3a;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: transparent;" +
-                        "-fx-border-width: 2;" +
-                        "-fx-focus-color: #2e8b57;" +
-                        "-fx-faint-focus-color: rgba(46,139,87,0.4);"
-        );
+        newPuzzleButton.setStyle(BUTTON_STYLE);
         newPuzzleButton.setText("Nowa zagadka");
         newPuzzleButton.setDisable(false);
-    }
-
-    public void setNewGameButton() {
-        newGameButton.setStyle(
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: #3a3a3a;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: transparent;" +
-                        "-fx-border-width: 2;" +
-                        "-fx-focus-color: #2e8b57;" +
-                        "-fx-faint-focus-color: rgba(46,139,87,0.4);"
-        );
-        newGameButton.setText("Gracz vs Gracz");
-        newGameButton.setDisable(false);
     }
 
     public void setTurn(boolean isWhite) {
@@ -172,5 +168,9 @@ public class SideBarView extends VBox {
         if(typeDraw == 0) {
             infoBox.setInfo("Szach! mat? I Pat :D", "#DCDCDC", "gray");
         }
+    }
+
+    public void setSolved() {
+        infoBox.setInfo("Zagadka rozwiązana", "green", "white");
     }
 }

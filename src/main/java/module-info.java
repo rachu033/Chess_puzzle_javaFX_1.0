@@ -7,12 +7,15 @@ module code.chess {
     requires java.desktop;
     requires jdk.httpserver;
     requires java.net.http;
-    requires commons.logging;
-    requires org.apache.logging.log4j;
+    requires org.apache.commons.configuration2;
+
+    requires org.apache.commons.logging;
+
     requires java.sql;
     requires org.apache.commons.lang3;
-
+    requires org.apache.logging.log4j;
 
     opens code.chess to javafx.fxml;
+    opens code.chess.controller to javafx.fxml;
     exports code.chess;
 }

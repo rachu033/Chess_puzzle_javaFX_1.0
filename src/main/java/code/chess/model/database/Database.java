@@ -24,8 +24,9 @@ public class Database {
                 pgn TEXT NOT NULL,
                 rating INTEGER,
                 solution TEXT NOT NULL,
-                saved_at TEXT NOT NULL,
-                isSolved INTEGER DEFAULT 0
+                savedAt TEXT NOT NULL,
+                isSolved INTEGER DEFAULT 0,
+                isFavourite INTEGER DEFAULT 0
             )
             """;
             stmt.execute(sql);

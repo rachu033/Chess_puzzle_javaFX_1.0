@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="225.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/21.0.2"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.chess.controller.SettingsController">
+    <VBox prefHeight="225.0" prefWidth="400.0" spacing="15.0">
+        <HBox spacing="20.0">
+            <VBox spacing="10.0">
+                <HBox.margin>
+                    <Insets bottom="5.0"/>
+                </HBox.margin>
+                <RadioButton mnemonicParsing="false" text="Chess.com">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="color"/>
+                    </toggleGroup>
+                    <font>
+                        <Font size="16.0"/>
+                    </font>
+                </RadioButton>
+                <RadioButton mnemonicParsing="false" text="Lichess" toggleGroup="$color">
+                    <font>
+                        <Font size="16.0"/>
+                    </font>
+                </RadioButton>
+                <RadioButton mnemonicParsing="false" text="Standard" toggleGroup="$color">
+                    <font>
+                        <Font size="16.0"/>
+                    </font>
+                </RadioButton>
+            </VBox>
+            <Rectangle fx:id="lightSquare" arcHeight="10.0" arcWidth="10.0"
+                       height="100.0" width="100.0"
+                       stroke="black" strokeWidth="2"/>
+
+            <Rectangle fx:id="darkSquare" arcHeight="10.0" arcWidth="10.0"
+                       height="100.0" width="100.0"
+                       stroke="black" strokeWidth="2"/>
+            <VBox.margin>
+                <Insets left="25.0" right="25.0" top="25.0"/>
+            </VBox.margin>
+        </HBox>
+        <CheckBox fx:id="showMovesCheckBox" mnemonicParsing="false" text="Pokaż możliwe ruchy figur">
+            <VBox.margin>
+                <Insets left="25.0"/>
+            </VBox.margin>
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </CheckBox>
+        <CheckBox fx:id="autoLoadPuzzleCheckBox" mnemonicParsing="false"
+                  text="Automatycznie ładuj zagadkę po rozwiązaniu">
+            <font>
+                <Font size="16.0"/>
+            </font>
+            <VBox.margin>
+                <Insets left="25.0"/>
+            </VBox.margin>
+        </CheckBox>
+    </VBox>
+</AnchorPane>
