@@ -13,13 +13,25 @@ import java.util.List;
 public class PuzzleFetcher {
 
     public static Puzzle fetchPuzzle() throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
+        if (Thread.interrupted()) {
+            throw new InterruptedException("FetchPuzzle interrupted before request.");
+        }
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(5))
+                .build();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://lichess.org/api/puzzle/next"))
                 .header("Accept", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (Thread.interrupted()) {
+            throw new InterruptedException("FetchPuzzle interrupted after request.");
+        }
 
         if (response.statusCode() != 200) {
             throw new IOException("Failed to fetch puzzle. HTTP code: " + response.statusCode());
@@ -38,4 +50,5 @@ public class PuzzleFetcher {
 
         return new Puzzle(pgn, rating, solution);
     }
+
 }

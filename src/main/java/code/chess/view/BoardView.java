@@ -117,6 +117,7 @@ public class BoardView extends Pane {
         String[] positions = positionString.split(" ");
         selectedField = null;
         Platform.runLater(() -> {
+            clearAllMoveHints();
             clearBoard();
             for (String position : positions) {
                 char colorChar = position.charAt(0);
@@ -134,6 +135,36 @@ public class BoardView extends Pane {
                 fieldView.getChildren().add(pieceView);
             }
         });
+    }
+
+    public void setMoveHintsFromString(String moveHints) {
+        if (moveHints == null || moveHints.trim().isEmpty()) {
+            return;
+        }
+        String[] moveHint = moveHints.split(" ");
+        Platform.runLater(() -> {
+            clearAllMoveHints();
+            for (String position : moveHint) {
+                position = position.toUpperCase();
+                int col = FieldView.getX(position);
+                int row = FieldView.getY(position);
+                if (position.contains("0")) {
+                    fieldViews[col][row].showMoveHint("GREEN");
+                }
+                else if (position.contains("*")) {
+                    fieldViews[col][row].showMoveHint("ORANGE");
+                }
+                else fieldViews[col][row].showMoveHint("RED");
+            }
+        });
+    }
+
+    public void clearAllMoveHints() {
+        for(int i = 0; i < 8; i ++) {
+            for(int j = 0; j < 8; j ++) {
+                fieldViews[i][j].clearMoveHint();
+            }
+        }
     }
 
     public void setSelectedField(FieldView selectedField) {
@@ -161,7 +192,21 @@ public class BoardView extends Pane {
         }
     }
 
+    public void updateFieldColors(Color light, Color dark) {
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                FieldView field = fieldViews[col][row];
+                Color color = field.isWhite() ? light : dark;
+                field.updateColor(color);
+            }
+        }
+    }
+
     public FieldView getFieldView(int col, int row) {
         return fieldViews[col][row];
+    }
+
+    public FieldView getSelectedField() {
+        return selectedField;
     }
 }

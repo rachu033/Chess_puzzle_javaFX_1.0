@@ -5,14 +5,70 @@ import code.chess.model.chessgame.figure.*;
 
 import java.util.function.Consumer;
 
-public class ChessLogic {
+public class LogicChess {
     private boolean isWhiteTure;
     private final Board board;
     private Consumer<BoardController.Event> eventHandler;
 
-    public ChessLogic() {
+    public LogicChess() {
         this.board = new Board();
         isWhiteTure = true;
+    }
+
+    public void setEventHandler(Consumer<BoardController.Event> handler) {
+        this.eventHandler = handler;
+    }
+
+    public String getLegalMoves(int currentCol, int currentRow) {
+        StringBuilder legalMoves = new StringBuilder();
+        Piece piece = getBoard().getPieceOnField(currentCol, currentRow);
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 8; j++) {
+                if(getBoard().getPieceOnField(i, j) != null && getBoard().getPieceOnField(i, j).isWhite() == piece.isWhite()) continue;
+                if(!piece.isValidMove(i, j)) continue;
+                if(piece instanceof Pawn) {
+                    if(!isPathToFieldForPawn(currentCol, currentRow, i, j)) continue;
+                }
+                else {
+                    if(!isPathToField(currentCol, currentRow, i, j) && !(piece instanceof Knight)) continue;
+                }
+                if(!isMoveSafe(piece, i, j)) continue;
+                legalMoves.append(Field.getAlgebraicNotation(i, j)).append(" ");
+            }
+        }
+        if(piece instanceof King king && king.isCastlePossible()) {
+            Rook rook;
+            if(board.getPieceOnField(0, king.getField().getY()) != null) {
+                rook = (Rook) board.getPieceOnField(0, king.getField().getY());
+                if(rook != null && rook.isCastlePossible()) {
+                    if (canCastle(king, rook)) {
+                        legalMoves.append(Field.getAlgebraicNotation(rook.getField().getX(), rook.getField().getY())).append("0");
+                    }
+                }
+            }
+            if(board.getPieceOnField(7, king.getField().getY()) != null) {
+                rook = (Rook) board.getPieceOnField(7, king.getField().getY());
+                if(rook != null && rook.isCastlePossible()) {
+                    if (canCastle(king, rook)) {
+                        legalMoves.append(Field.getAlgebraicNotation(rook.getField().getX(), rook.getField().getY())).append("0");
+                    }
+                }
+            }
+        }
+        if(piece instanceof Pawn pawn) {
+            Piece[] pieces = !isWhiteTure ? board.getWhitePieces() : board.getBlackPieces();
+            for(Piece checkedPiece : pieces) {
+                if(checkedPiece instanceof Pawn checkedPawn) {
+                    if(checkedPawn.isEnPassantPossible()) {
+                        if(pawn.getField().getY() == checkedPawn.getField().getY() && 1 == Math.abs(checkedPawn.getField().getX() - pawn.getField().getX())) {
+                            legalMoves.append(Field.getAlgebraicNotation(checkedPawn.getField().getX(), checkedPawn.getField().getY())).append("*");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return legalMoves.toString();
     }
 
     public boolean tryMove(int currentCol, int currentRow, int targetCol, int targetRow) {
@@ -20,13 +76,11 @@ public class ChessLogic {
         if(piece == null || piece.isWhite() != isWhiteTure) return false;
         //Castle
         if(piece instanceof King king && board.getPieceOnField(targetCol, targetRow) != null && board.getPieceOnField(targetCol, targetRow) instanceof Rook rook && piece.isWhite() == rook.isWhite()) {
-            if (king.isCastlePossible() &&  rook.isCastlePossible()) {
-                int rookCol = rook.getField().getX();
-                int rowY = rook.getField().getY();
-                boolean canCastle = isPathToField(rookCol, rowY, 4, rowY) &&
-                        !isFieldAttacked(rookCol == 0 ? 2 : 6, rowY, rook.isWhite()) &&
-                        !isFieldAttacked(rookCol == 0 ? 3 : 5, rowY, rook.isWhite());
-                if (canCastle) {
+            if (king.isCastlePossible() && rook.isCastlePossible() ) {
+                if (canCastle(king, rook)) {
+                    int rookCol = rook.getField().getX();
+                    int rowY = rook.getField().getY();
+
                     int kingTargetCol = rookCol == 0 ? 2 : 6;
                     int rookTargetCol = rookCol == 0 ? 3 : 5;
 
@@ -50,7 +104,6 @@ public class ChessLogic {
         if (!piece.isValidMove(targetCol, targetRow)) {
             return false;
         }
-
         // Pawn
         if(piece instanceof Pawn) {
             if(!isPathToFieldForPawn(currentCol, currentRow, targetCol, targetRow)) return false;
@@ -59,12 +112,10 @@ public class ChessLogic {
         else {
             if(!isPathToField(currentCol, currentRow, targetCol, targetRow) && !(piece instanceof Knight)) return false;
         }
-
         // King attacked after move
         if(!isMoveSafe(piece, targetCol, targetRow)) {
             return false;
         }
-
         // Captured opponent or own pieces
         Piece target = board.getPieceOnField(targetCol, targetRow);
         if (target != null && target.isWhite() != piece.isWhite()) {
@@ -74,7 +125,6 @@ public class ChessLogic {
         } else if (target != null) {
             return false;
         }
-
         // En passant
         if (piece instanceof Pawn) {
             if(Math.abs(targetRow - currentRow) == 2) ((Pawn) piece).setEnPassantPossible(true);
@@ -93,7 +143,6 @@ public class ChessLogic {
                 }
             }
         }
-
         // First move king or rook
         if(piece instanceof King) ((King) piece).setCastlePossible(false);
         if(piece instanceof Rook) ((Rook) piece).setCastlePossible(false);
@@ -102,7 +151,7 @@ public class ChessLogic {
         board.getField(currentCol, currentRow).setPiece(null);
         board.getField(targetCol, targetRow).setPiece(piece);
 
-        if(piece instanceof Pawn && (piece.getField().getY() == 0 || piece.getField().getY() == 7) && !(this instanceof PuzzleLogic)) {
+        if(piece instanceof Pawn && (piece.getField().getY() == 0 || piece.getField().getY() == 7) && !(this instanceof LogicPuzzle)) {
             eventHandler.accept(new BoardController.PromotionEvent(board.getField(targetCol, targetRow)));
         }
 
@@ -121,14 +170,10 @@ public class ChessLogic {
         }
         Piece newPiece = null;
         switch (name) {
-            case "Q" -> newPiece = new Queen(isWhite, null);
-            case "R" -> newPiece = new Rook(isWhite, null);
-            case "B" -> newPiece = new Bishop(isWhite, null);
-            case "N" -> newPiece = new Knight(isWhite, null);
-            case "q" -> newPiece = new Queen(isWhite, null);
-            case "r" -> newPiece = new Rook(isWhite, null);
-            case "b" -> newPiece = new Bishop(isWhite, null);
-            case "n" -> newPiece = new Knight(isWhite, null);
+            case "Q", "q" -> newPiece = new Queen(isWhite, null);
+            case "R", "r" -> newPiece = new Rook(isWhite, null);
+            case "B", "b" -> newPiece = new Bishop(isWhite, null);
+            case "N", "n" -> newPiece = new Knight(isWhite, null);
         }
 
         if(pawn != null && newPiece != null) {
@@ -147,6 +192,15 @@ public class ChessLogic {
         }
     }
 
+    public boolean canCastle(King king, Rook rook) {
+        int rookCol = rook.getField().getX();
+        int rowY = rook.getField().getY();
+        return isPathToField(rookCol, rowY, 4, rowY) &&
+                !isFieldAttacked(rookCol == 0 ? 2 : 6, rowY, rook.isWhite()) &&
+                !isFieldAttacked(rookCol == 0 ? 3 : 5, rowY, rook.isWhite()) &&
+                !isFieldAttacked(4, rowY, king.isWhite());
+    }
+
     public void afterMove() {
         isWhiteTure = !isWhiteTure;
         for (Piece piece : isWhiteTure ? board.getWhitePieces() : board.getBlackPieces()) {
@@ -154,14 +208,6 @@ public class ChessLogic {
                 ((Pawn) piece).setEnPassantPossible(false);
             }
         }
-    }
-
-    public Board getBoard() {
-        return board;
-    }
-
-    public void setEventHandler(Consumer<BoardController.Event> handler) {
-        this.eventHandler = handler;
     }
 
     protected boolean isPathToField(int currentCol, int currentRow, int targetCol, int targetRow) {
@@ -276,6 +322,10 @@ public class ChessLogic {
         }
         if (king == null) return false;
         return isFieldAttacked(king.getField().getX(), king.getField().getY(), isWhite);
+    }
+
+    public Board getBoard() {
+        return board;
     }
 
     public boolean isWhiteTure() {

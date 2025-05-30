@@ -3,13 +3,18 @@ package code.chess.controller;
 import code.chess.controller.listener.SuccessSolveListener;
 import code.chess.controller.listener.WrongSolveListener;
 import code.chess.model.chessgame.Field;
-import code.chess.model.chessgame.PuzzleLogic;
+import code.chess.model.chessgame.LogicPuzzle;
 import code.chess.model.database.PuzzleDAO;
 import code.chess.model.puzzle.Puzzle;
 import code.chess.view.BoardView;
 import code.chess.view.FieldView;
 import code.chess.view.SideBarView;
 import javafx.application.Platform;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+
+import java.io.File;
 import java.util.function.Consumer;
 
 public class PuzzleController extends BoardController implements WrongSolveListener, SuccessSolveListener {
@@ -17,7 +22,7 @@ public class PuzzleController extends BoardController implements WrongSolveListe
     private Consumer<ApplicationController.Event> applicationEventQueue;
     private final boolean isWhitePuzzle;
 
-    public PuzzleController(BoardView boardView, PuzzleLogic puzzleLogic, SideBarView sideBarView) {
+    public PuzzleController(BoardView boardView, LogicPuzzle puzzleLogic, SideBarView sideBarView) {
         super(boardView, puzzleLogic, sideBarView);
         puzzleLogic.loadFromPgnMoves(puzzleLogic.getPuzzle().getPgn());
         boardView.setPiecesFromString(puzzleLogic.getBoard().getCurrentPositionString());
@@ -30,8 +35,6 @@ public class PuzzleController extends BoardController implements WrongSolveListe
     }
 
     private void handleEvent(Event event) {
-
-
         if (event instanceof MarkEvent markEvent) {
             onMarkAttempt(markEvent.getChooseField());
         } else if (event instanceof MoveEvent moveEvent) {
@@ -73,6 +76,13 @@ public class PuzzleController extends BoardController implements WrongSolveListe
                 Platform.runLater(() -> getBoardView().setColorBackground("#3e2723"));
             }).start();
         }
+        try {
+            while (!Thread.interrupted()){
+                eventQueue.take();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
@@ -82,6 +92,7 @@ public class PuzzleController extends BoardController implements WrongSolveListe
             Platform.runLater(() -> {
                 getBoardView().setSelectedField(chooseField);
                 chooseField.getPieceView().upSize();
+                getBoardView().setMoveHintsFromString(getChessLogic().getLegalMoves(chooseField.getX(), chooseField.getY()));
             });
         }
     }
@@ -106,7 +117,18 @@ public class PuzzleController extends BoardController implements WrongSolveListe
         puzzleDAO.markPuzzleAsSolved(puzzle.getPgn());
         Platform.runLater(() -> getBoardView().setColorBackground("green"));
         Platform.runLater(() -> getSideBarView().updatePuzzleSolved(puzzle));
-        applicationEventQueue.accept(new ApplicationController.NewPuzzleEvent());
+        Platform.runLater(() -> getSideBarView().setSolved());
+        Configurations configs = new Configurations();
+        PropertiesConfiguration config;
+        try {
+            config = configs.properties(new File("settings.properties"));
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        boolean autoLoadPuzzle = config.getBoolean("autoLoadPuzzle", true);
+        if(autoLoadPuzzle) {
+            applicationEventQueue.accept(new ApplicationController.NewPuzzleEvent());
+        }
         running = false;
     }
 

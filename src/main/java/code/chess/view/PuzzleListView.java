@@ -26,13 +26,24 @@ public class PuzzleListView extends VBox {
     private boolean sortByDateAsc = false;
 
     private enum SortMode { RATING, DATE }
-    private enum FilterMode { ALL, SOLVED, UNSOLVED }
+    private enum FilterMode { ALL, SOLVED, UNSOLVED, FAVOURITES }
 
     private SortMode activeSortMode = SortMode.DATE;
     private FilterMode filterMode = FilterMode.ALL;
 
     private Consumer<ApplicationController.Event> eventHandler;
     private PuzzleView selectedView;
+
+    private static final String BUTTON_STYLE = """
+        -fx-background-color: #3a3a3a;
+        -fx-text-fill: white;
+        -fx-font-weight: bold;
+        -fx-background-radius: 0;
+        -fx-border-color: transparent;
+        -fx-border-width: 2;
+        -fx-focus-color: #2e8b57;
+        -fx-faint-focus-color: rgba(46,139,87,0.4);
+    """;
 
     public PuzzleListView() {
         initializeView();
@@ -45,8 +56,22 @@ public class PuzzleListView extends VBox {
         this.eventHandler = handler;
     }
 
+    private void styleButton(Button button) {
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setPrefHeight(50.0);
+        button.setStyle(BUTTON_STYLE);
+        button.setOnMouseEntered(_ -> {
+            String style = button.getStyle();
+            button.setStyle(style + "-fx-opacity: 0.8;");
+        });
+        button.setOnMouseExited(_ -> {
+            updateSolvedFilterButtonStyle();
+            updateSortButtonStyles();
+        });
+    }
+
     private void initializeView() {
-        puzzleList.setPrefHeight(550);
+        puzzleList.setPrefHeight(420);
         puzzleList.setStyle("""
             -fx-selection-bar: transparent;
             -fx-selection-bar-non-focused: transparent;
@@ -81,14 +106,12 @@ public class PuzzleListView extends VBox {
             }
         });
 
+        styleButton(sortByRatingButton);
+        styleButton(sortByDateButton);
+        styleButton(sortBySolvedButton);
+
         sortByRatingButton.setPrefWidth(95);
         sortByDateButton.setPrefWidth(95);
-        sortBySolvedButton.setMaxWidth(Double.MAX_VALUE);
-
-
-        sortByRatingButton.setPrefHeight(50);
-        sortByDateButton.setPrefHeight(50);
-        sortBySolvedButton.setPrefHeight(50);
 
         sortByRatingButton.setOnAction(_ -> {
             sortByRatingAsc = !sortByRatingAsc;
@@ -117,6 +140,10 @@ public class PuzzleListView extends VBox {
                     sortBySolvedButton.setText("Rozwiązane");
                 }
                 case SOLVED -> {
+                    filterMode = FilterMode.FAVOURITES;
+                    sortBySolvedButton.setText("Ulubione");
+                }
+                case FAVOURITES -> {
                     filterMode = FilterMode.ALL;
                     sortBySolvedButton.setText("Wszystkie");
                 }
@@ -137,12 +164,14 @@ public class PuzzleListView extends VBox {
 
     public void addPuzzleOnLaunch(Puzzle puzzle) {
         PuzzleView puzzleView = createPuzzleView(puzzle);
+        puzzleView.setEventHandler(eventHandler);
         masterList.add(puzzleView);
         applyCurrentSorting();
     }
 
     public void addPuzzle(Puzzle puzzle) {
         PuzzleView puzzleView = createPuzzleView(puzzle);
+        puzzleView.setEventHandler(eventHandler);
         masterList.add(puzzleView);
         applyCurrentSorting();
         selectPuzzleView(puzzleView);
@@ -191,6 +220,7 @@ public class PuzzleListView extends VBox {
             case ALL -> false;
             case SOLVED -> !pv.getPuzzle().isSolved();
             case UNSOLVED -> pv.getPuzzle().isSolved();
+            case FAVOURITES -> !pv.getPuzzle().isFavourite();
         });
 
         filtered.sort((a, b) -> {
@@ -206,29 +236,33 @@ public class PuzzleListView extends VBox {
     }
 
     private void updateSortButtonStyles() {
-        String activeStyle =
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: GREEN;" +
-                        "-fx-text-fill: white;";
-        String inactiveStyle =
-                "-fx-background-radius: 0;" +
-                        "-fx-background-color: #3a3a3a;" +
-                        "-fx-text-fill: white;";
+        String activeStyle = BUTTON_STYLE.replace("-fx-background-color: #3a3a3a;", "-fx-background-color: GREEN;");
 
-        sortByRatingButton.setStyle(activeSortMode == SortMode.RATING ? activeStyle : inactiveStyle);
-        sortByDateButton.setStyle(activeSortMode == SortMode.DATE ? activeStyle : inactiveStyle);
+        sortByRatingButton.setStyle(activeSortMode == SortMode.RATING ? activeStyle : BUTTON_STYLE);
+        sortByDateButton.setStyle(activeSortMode == SortMode.DATE ? activeStyle : BUTTON_STYLE);
     }
 
     private void updateSolvedFilterButtonStyle() {
-        String baseStyle = "-fx-background-radius: 0; -fx-text-fill: white;";
-        switch (filterMode) {
-            case ALL -> sortBySolvedButton.setStyle(baseStyle +
-                    "-fx-background-color: #3a3a3a; -fx-border-color: transparent;");
-            case UNSOLVED -> sortBySolvedButton.setStyle(baseStyle +
-                    "-fx-background-color: ORANGE; -fx-border-color: #3a3a3a;");
-            case SOLVED -> sortBySolvedButton.setStyle(baseStyle +
-                    "-fx-background-color: GREEN; -fx-border-color: #3a3a3a;");
-        }
+        String solvedStyle = BUTTON_STYLE
+                .replace("-fx-background-color: #3a3a3a;", "-fx-background-color: GREEN;")
+                .replace("-fx-border-color: transparent;", "-fx-border-color: #3a3a3a;");
+
+        String unsolvedStyle = BUTTON_STYLE
+                .replace("-fx-background-color: #3a3a3a;", "-fx-background-color: ORANGE;")
+                .replace("-fx-border-color: transparent;", "-fx-border-color: #3a3a3a;");
+
+        String favouriteStyle = BUTTON_STYLE
+                .replace("-fx-background-color: #3a3a3a;", "-fx-background-color: #D4AF37;") // Gold
+                .replace("-fx-border-color: transparent;", "-fx-border-color: #3a3a3a;");
+
+        sortBySolvedButton.setStyle(
+                switch (filterMode) {
+                    case ALL -> BUTTON_STYLE;
+                    case UNSOLVED -> unsolvedStyle;
+                    case SOLVED -> solvedStyle;
+                    case FAVOURITES -> favouriteStyle;
+                }
+        );
     }
 
     public void setSelectedView(PuzzleView selectedView) {
@@ -244,5 +278,4 @@ public class PuzzleListView extends VBox {
     public PuzzleView getSelectedView() {
         return selectedView;
     }
-
 }

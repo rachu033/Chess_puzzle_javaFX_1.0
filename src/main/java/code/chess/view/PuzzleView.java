@@ -1,19 +1,26 @@
 package code.chess.view;
 
+import code.chess.controller.ApplicationController.SetFavouriteEvent;
+import code.chess.controller.ApplicationController.Event;
 import code.chess.model.puzzle.Puzzle;
-import javafx.scene.layout.HBox;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
-import javafx.geometry.Insets;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class PuzzleView extends HBox {
     private final Puzzle puzzle;
     private Rectangle colorBlock;
     private Label turnLabel;
+    private Consumer<Event> eventHandler;
 
     public PuzzleView(Puzzle puzzle) {
         super(10);
@@ -21,19 +28,27 @@ public class PuzzleView extends HBox {
         initializeTile();
     }
 
+    public void setEventHandler(Consumer<Event> handler) {
+        this.eventHandler = handler;
+    }
+
     private void initializeTile() {
         colorBlock = createColorBlock();
         Label ratingLabel = createRatingLabel();
         turnLabel = createTurnLabel();
+        StackPane favouriteStar = createFavouriteStar();
 
         String backgroundColor = getTurnBackgroundColor();
         this.setStyle(createTileStyle(backgroundColor));
 
         VBox infoBox = new VBox(5);
         infoBox.getChildren().addAll(ratingLabel, turnLabel);
-
-        this.getChildren().addAll(colorBlock, infoBox);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        this.getChildren().addAll(colorBlock, infoBox, favouriteStar);
         setPadding(new Insets(5));
     }
 
@@ -56,12 +71,41 @@ public class PuzzleView extends HBox {
         int moveCount = puzzle.getPgn().trim().isEmpty() ? 0 : puzzle.getPgn().trim().split("\\s+").length;
         int turnNumber = moveCount + 1;
         boolean isWhiteToMove = turnNumber % 2 != 0;
-        turnNumber = turnNumber/2;
+        turnNumber = turnNumber / 2;
 
         Label turnLabel = new Label("Tura: " + turnNumber);
         turnLabel.setFont(new Font("Roboto", 14));
         turnLabel.setStyle("-fx-text-fill: " + (isWhiteToMove ? "#000000" : "#ffffff") + ";");
         return turnLabel;
+    }
+
+    private StackPane createFavouriteStar() {
+        String imageFolderPath = "/code/chess/images/";
+        String truePath = imageFolderPath + "favouriteTrue.png";
+        String falsePath = imageFolderPath + "favouriteFalse.png";
+
+        Image trueImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream(truePath)));
+        Image falseImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream(falsePath)));
+
+        ImageView starImageView = new ImageView(puzzle.isFavourite() ? trueImage : falseImage);
+        starImageView.setFitWidth(36);
+        starImageView.setFitHeight(36);
+        starImageView.setSmooth(true);
+
+        StackPane clickableArea = new StackPane(starImageView);
+        clickableArea.setMinSize(36, 36);
+        clickableArea.setStyle("-fx-cursor: hand;");
+
+        clickableArea.setOnMouseClicked((MouseEvent event) -> {
+            event.consume();
+            puzzle.setFavourite(!puzzle.isFavourite());
+            starImageView.setImage(puzzle.isFavourite() ? trueImage : falseImage);
+            if (eventHandler != null) {
+                eventHandler.accept(new SetFavouriteEvent(puzzle));
+            }
+        });
+
+        return clickableArea;
     }
 
     private String createTileStyle(String backgroundColor) {
@@ -95,7 +139,7 @@ public class PuzzleView extends HBox {
         int moveCount = puzzle.getPgn().trim().isEmpty() ? 0 : puzzle.getPgn().trim().split("\\s+").length;
         int turnNumber = moveCount + 1;
         boolean isWhiteToMove = turnNumber % 2 != 0;
-        turnNumber = turnNumber/2;
+        turnNumber = turnNumber / 2;
 
         turnLabel.setText("Tura: " + turnNumber);
         turnLabel.setStyle("-fx-text-fill: " + (isWhiteToMove ? "#000000" : "#ffffff") + ";");
@@ -113,4 +157,3 @@ public class PuzzleView extends HBox {
         return puzzle;
     }
 }
-

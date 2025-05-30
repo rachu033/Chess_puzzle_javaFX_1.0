@@ -9,6 +9,7 @@ public class Puzzle {
     private final List<String> solution;
     private final LocalDateTime dateTime;
     private boolean isSolved;
+    private boolean isFavourite;
 
     public Puzzle(String pgn, int rating, List<String> solution) {
         this.pgn = pgn;
@@ -16,6 +17,7 @@ public class Puzzle {
         this.solution = solution;
         this.dateTime = LocalDateTime.now();
         this.isSolved = false;
+        this.isFavourite = false;
     }
 
     public Puzzle(String pgn, int rating, List<String> solution, LocalDateTime dateTime) {
@@ -24,6 +26,7 @@ public class Puzzle {
         this.solution = solution;
         this.dateTime = dateTime;
         this.isSolved = false;
+        this.isFavourite = false;
     }
 
     public boolean isSolved() {
@@ -48,5 +51,13 @@ public class Puzzle {
 
     public LocalDateTime getDateTime() {
         return dateTime;
+    }
+
+    public boolean isFavourite() {
+        return isFavourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        isFavourite = favourite;
     }
 }

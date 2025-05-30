@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-public class PuzzleLogic extends ChessLogic {
+public class LogicPuzzle extends LogicChess {
     private final Puzzle puzzle;
     private String nextMove;
     private int roundSolution = 0;
@@ -24,7 +24,7 @@ public class PuzzleLogic extends ChessLogic {
         pieceTypeMap.put('N', Knight.class);
     }
 
-    public PuzzleLogic(Puzzle puzzle) {
+    public LogicPuzzle(Puzzle puzzle) {
         super();
         this.puzzle = puzzle;
         List<String> solution = puzzle.getSolution();

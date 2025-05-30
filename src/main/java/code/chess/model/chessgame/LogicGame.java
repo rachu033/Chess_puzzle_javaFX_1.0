@@ -3,10 +3,10 @@ package code.chess.model.chessgame;
 import code.chess.controller.GameController;
 import code.chess.model.chessgame.figure.*;
 
-public class GameLogic extends ChessLogic {
+public class LogicGame extends LogicChess {
     private String pgn = "";
 
-    public GameLogic() {
+    public LogicGame() {
         super();
         getBoard().startPosition();
     }

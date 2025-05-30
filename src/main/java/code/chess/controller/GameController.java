@@ -3,7 +3,7 @@ package code.chess.controller;
 import code.chess.controller.listener.CheckMateListener;
 import code.chess.controller.listener.CopyPgnListener;
 import code.chess.controller.listener.DrawListener;
-import code.chess.model.chessgame.GameLogic;
+import code.chess.model.chessgame.LogicGame;
 import code.chess.view.BoardView;
 import code.chess.view.SideBarView;
 import javafx.application.Platform;
@@ -13,7 +13,7 @@ import javafx.scene.input.ClipboardContent;
 public class GameController extends BoardController implements CheckMateListener, DrawListener, CopyPgnListener {
     boolean isCheckMate;
 
-    public GameController(BoardView boardView, GameLogic gameLogic, SideBarView sideBarView) {
+    public GameController(BoardView boardView, LogicGame gameLogic, SideBarView sideBarView) {
         super(boardView, gameLogic, sideBarView);
         sideBarView.setEventHandlerGame(this::handleEvent);
         this.isCheckMate = false;
@@ -88,7 +88,7 @@ public class GameController extends BoardController implements CheckMateListener
 
     @Override
     public void onCopyPgnAttempt() {
-        GameLogic gameLogic = (GameLogic)getChessLogic();
+        LogicGame gameLogic = (LogicGame)getChessLogic();
         String pgn = gameLogic.getPgn();
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
